@@ -31,8 +31,12 @@ fn main() {
     let mut data = parse_tsv(&content, &delimeter);
     for flag in &flags {
         if flag.starts_with("-f") {
-            let n = flag[2..].parse::<usize>().expect("Invalid flag");
-            data = get_nth_field(&data, n - 1);
+            let fields = flag[2..]
+                .trim_matches('"')
+                .split(|c| c == ' ' || c == ',')
+                .map(|s| s.parse::<usize>().expect("Invalid flag"))
+                .collect::<Vec<usize>>();
+            data = get_nth_field(&data, &fields);
         }
     }
 
@@ -41,8 +45,16 @@ fn main() {
     }
 }
 
-fn get_nth_field(data: &Vec<Vec<String>>, n: usize) -> Vec<Vec<String>> {
-    data.iter().map(|row| vec![row[n].clone()]).collect()
+fn get_nth_field(data: &Vec<Vec<String>>, n: &Vec<usize>) -> Vec<Vec<String>> {
+    let mut result = Vec::new();
+    for row in data {
+        let mut new_row = Vec::new();
+        for i in n {
+            new_row.push(row[*i - 1].clone());
+        }
+        result.push(new_row);
+    }
+    result
 }
 
 fn parse_tsv(content: &str, delimeter: &str) -> Vec<Vec<String>> {
