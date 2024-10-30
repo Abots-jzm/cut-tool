@@ -21,32 +21,33 @@ fn main() {
         .expect("Failed to read file")
         .trim()
         .to_string();
-    let data = parse_tsv(&content);
+    let mut delimeter = "\t";
+    for flag in &flags {
+        if flag.starts_with("-d") {
+            delimeter = &flag[2..].trim_matches('"');
+        }
+    }
 
+    let mut data = parse_tsv(&content, &delimeter);
     for flag in &flags {
         if flag.starts_with("-f") {
             let n = flag[2..].parse::<usize>().expect("Invalid flag");
-            let new_data = get_nth_field(&data, n - 1);
-            for row in new_data {
-                println!("{}", row);
-            }
-            continue;
+            data = get_nth_field(&data, n - 1);
         }
-        match flag.as_str() {
-            "-flag1" => println!("Flag 1 is set"),
-            "-flag2" => println!("Flag 2 is set"),
-            _ => panic!("Unknown flag: {}", flag),
-        }
+    }
+
+    for row in data {
+        println!("{}", row.join(delimeter));
     }
 }
 
-fn get_nth_field(data: &Vec<Vec<String>>, n: usize) -> Vec<String> {
-    data.iter().map(|row| row[n].clone()).collect()
+fn get_nth_field(data: &Vec<Vec<String>>, n: usize) -> Vec<Vec<String>> {
+    data.iter().map(|row| vec![row[n].clone()]).collect()
 }
 
-fn parse_tsv(content: &str) -> Vec<Vec<String>> {
+fn parse_tsv(content: &str, delimeter: &str) -> Vec<Vec<String>> {
     content
         .lines()
-        .map(|line| line.split('\t').map(|s| s.to_string()).collect())
+        .map(|line| line.split(delimeter).map(|s| s.to_string()).collect())
         .collect()
 }
