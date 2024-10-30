@@ -1,3 +1,5 @@
+use std::io::Read;
+
 fn main() {
     let args: Vec<String> = std::env::args().collect();
     let mut flags: Vec<String> = Vec::new();
@@ -7,20 +9,29 @@ fn main() {
     while i < args.len() {
         if args[i].starts_with("-") {
             flags.push(args[i].clone());
-        } else {
+        } else if i == args.len() - 1 {
             filename = args[i].clone();
         }
         i += 1;
     }
 
-    if filename.is_empty() || flags.is_empty() {
-        panic!("Usage: {} [flags...] <filename>", args[0]);
+    if flags.is_empty() {
+        panic!("Usage: {} [flags...] <filename?>", args[0]);
     }
 
-    let content = std::fs::read_to_string(&filename)
-        .expect("Failed to read file")
-        .trim()
-        .to_string();
+    let content = if filename.is_empty() || filename.starts_with("-") {
+        let mut content = String::new();
+        std::io::stdin()
+            .read_to_string(&mut content)
+            .expect("Failed to read from stdin");
+        content.trim().to_string()
+    } else {
+        std::fs::read_to_string(&filename)
+            .expect("Failed to read file")
+            .trim()
+            .to_string()
+    };
+
     let mut delimeter = "\t";
     for flag in &flags {
         if flag.starts_with("-d") {
